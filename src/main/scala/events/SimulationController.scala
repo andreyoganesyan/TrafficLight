@@ -1,10 +1,12 @@
 package events
 
+import misc.StatisticsCollector
 import model.{Crossroads, Vehicle}
 import org.apache.commons.math3.distribution.ExponentialDistribution
 
 class SimulationController(timeLimit: Double, config: SimulationConfig) {
-  val expDistribution = new ExponentialDistribution(config.avgGenerationTime);
+  private val generationDistribution = new ExponentialDistribution(config.avgGenerationTime)
+  private val passDistribution = new ExponentialDistribution(config.avgCarPassTime)
 
   def simulate(crossroads: Crossroads, eventQueue: EventQueue, time: Double): Unit = {
 
@@ -13,10 +15,10 @@ class SimulationController(timeLimit: Double, config: SimulationConfig) {
       val (event, queueTail) = eventQueue.dequeueEvent
 
       event match {
-        case VehicleSpawn(lane, vehicle, eventTime) =>
-          val newCrossroadsState = crossroads.spawnVehicle(vehicle, lane)
-          val nextGenerationTime = eventTime + expDistribution.sample()
-          val newQueue = queueTail.addEvent(VehicleSpawn(lane, Vehicle(nextGenerationTime), nextGenerationTime))
+        case VehicleSpawn(laneId, vehicle, eventTime) =>
+          val newCrossroadsState = crossroads.spawnVehicle(vehicle, laneId)
+          val nextGenerationTime = eventTime + generationDistribution.sample()
+          val newQueue = queueTail.addEvent(VehicleSpawn(laneId, Vehicle(nextGenerationTime), nextGenerationTime))
           simulate(newCrossroadsState, newQueue, eventTime)
 
         case LightChange(direction, newStateIsGreen, eventTime) =>
@@ -29,8 +31,16 @@ class SimulationController(timeLimit: Double, config: SimulationConfig) {
           val newQueue = queueTail.addEvent(LightChange(direction, !newStateIsGreen, nextChangeTime))
           simulate(newCrossroadsState, newQueue, eventTime)
 
-        case VehiclePass(lane, vehicle, eventTime) =>
-          val newCrossRoadsState = crossroads.
+        case VehiclePass(laneId, vehicle, eventTime) =>
+          StatisticsCollector.addTimeRecord(laneId, eventTime - vehicle.creationTime)
+          val newCrossRoadsState = crossroads.removeVehicle(vehicle, laneId)
+          val lane = newCrossRoadsState.lanes(laneId)
+          val newQueue =
+            if (lane.isGreen && lane.vehicles.nonEmpty) {
+              val nextPassTime = eventTime + passDistribution.sample()
+              queueTail.addEvent(VehiclePass(laneId, lane.vehicles.last, nextPassTime))
+            }
+
       }
 
     }
@@ -40,4 +50,5 @@ class SimulationController(timeLimit: Double, config: SimulationConfig) {
 }
 
 case class SimulationConfig(avgGenerationTime: Double,
+                            avgCarPassTime: Double,
                             trafficChangeTime: Double)

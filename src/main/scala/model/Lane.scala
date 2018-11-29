@@ -5,7 +5,7 @@ object Direction extends Enumeration {
   val Up, Down, Right, Left = Value
 }
 
-import Direction._
+import model.Direction._
 
 case class Lane(id: Long,
                 direction: Direction,
@@ -16,5 +16,7 @@ case class Lane(id: Long,
   def turnRed: Lane = this.copy(isGreen = false)
 
   def removeVehicle(vehicle: Vehicle): Lane = this.copy(vehicles = vehicles.filter(_ != vehicle))
+
+  def spawnVehicle(vehicle: Vehicle): Lane = this.copy(vehicles = vehicle :: vehicles)
 }
 

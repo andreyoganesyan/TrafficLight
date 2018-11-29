@@ -1,15 +1,19 @@
 package model
 
-import Direction._
+import model.Direction._
 
-case class Crossroads(lanes: List[Lane]) {
+case class Crossroads(lanes: Map[Long, Lane]) {
 
-  def spawnVehicle(vehicle: Vehicle, lane: Lane): Crossroads = {
-    this.copy(lanes = lane.copy(vehicles = vehicle :: lane.vehicles) :: lanes.filter(_ != lane))
+  def spawnVehicle(vehicle: Vehicle, laneId: Long): Crossroads = {
+    this.copy(lanes = lanes updated(laneId, lanes(laneId).spawnVehicle(vehicle)))
+  }
+
+  def removeVehicle(vehicle: Vehicle, laneId: Long): Crossroads = {
+    this.copy(lanes = lanes updated(laneId, lanes(laneId).removeVehicle(vehicle)))
   }
 
   private def editLanes(predicate: Lane => Boolean)(f: Lane => Lane): Crossroads =
-    this.copy(lanes = lanes.map { lane =>
+    this.copy(lanes = lanes.mapValues { lane =>
       if (predicate(lane))
         f(lane)
       else

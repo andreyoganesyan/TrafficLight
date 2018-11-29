@@ -5,7 +5,7 @@ import model._
 
 sealed abstract class Event(val time: Double)
 
-case class VehicleSpawn(lane: Lane,
+case class VehicleSpawn(laneId: Long,
                         vehicle: Vehicle,
                         override val time: Double) extends Event(time)
 
@@ -13,6 +13,6 @@ case class LightChange(direction: Direction,
                        newStateIsGreen: Boolean,
                        override val time: Double) extends Event(time)
 
-case class VehiclePass(lane: Lane,
+case class VehiclePass(laneId: Long,
                        vehicle: Vehicle,
                        override val time: Double) extends Event(time)
