@@ -2,7 +2,10 @@ package model
 
 object Direction extends Enumeration {
   type Direction = Value
-  val Up, Down, Right, Left = Value
+  val Up: Direction = Value(0)
+  val Left: Direction = Value(1)
+  val Down: Direction = Value(2)
+  val Right: Direction = Value(3)
 }
 
 import model.Direction._
